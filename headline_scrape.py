@@ -2,6 +2,8 @@ import requests
 import os, errno
 from datetime import date
 from bs4 import BeautifulSoup
+from selenium import webdriver
+from time import sleep
 
 ua = {"User-Agent":"Mozilla/5.0"}
 today = date.today()
@@ -9,22 +11,39 @@ day = today.strftime('%d')
 month = today.strftime('%m')
 year = today.year
 
-def get_story(site, url):
+def get_nyt_story(url):
     page = requests.get(url, headers=ua)
     soup = BeautifulSoup(page.text, "lxml")
-    if site is 'nyt':
-        body = soup.select('p.story-body-text')
-        headline = soup.select('h1.headline')[0].text
-        formatted_headline = headline.replace(' ', '')[0:15]
-        try:
-            os.makedirs('nyt/{year}-{month}-{day}'.format(month=month,day=day,year=year))
-        except OSError as e:
-            if e.errno != errno.EEXIST:
-                raise
-        with open('nyt/{year}-{month}-{day}/{headline}.html'.format(headline=headline,month=month,day=day,year=year), 'w') as f:
-            f.write('<h1>' + headline + '</h1>')
-            for section in body:
-                f.write('<p>' + section.text + '</p>')
+    body = soup.select('p.story-body-text')
+    headline = soup.select('h1.headline')[0].text
+    formatted_headline = headline.replace(' ', '')[0:15]
+    try:
+        os.makedirs('nyt/{year}-{month}-{day}'.format(month=month,day=day,year=year))
+    except OSError as e:
+        if e.errno != errno.EEXIST:
+            raise
+    with open('nyt/{year}-{month}-{day}/{headline}.html'.format(headline=formatted_headline,month=month,day=day,year=year), 'w') as f:
+        f.write('<h1>' + headline.strip() + '</h1>' + '\n\n')
+        for section in body:
+            f.write('<p>' + section.text.strip() + '</p>' + '\n')
+
+def get_wp_story(url):
+    page = requests.get(url, headers=ua)
+    soup = BeautifulSoup(page.text, "lxml")
+    body = soup.select('article p')
+    headline = soup.select('h1')[0].text
+    formatted_headline = headline.replace(' ', '')
+    try:
+        os.makedirs('wp/{year}-{month}-{day}'.format(month=month,day=day,year=year))
+    except OSError as e:
+        if e.errno != errno.EEXIST:
+            raise
+    with open('wp/{year}-{month}-{day}/{headline}.html'.format(headline=formatted_headline,month=month,day=day,year=year), 'w') as f:
+        f.write('<h1>' + headline.strip() + '</h1>' + '\n\n')
+        for section in body:
+            if len(section.text) > 2:
+                f.write('<p>' + section.text.strip() + '</p>' + '\n')
+    
 
 def get_headlines(site):
     if site is 'wp':
@@ -43,6 +62,7 @@ def get_headlines(site):
             for link in links:
                 if 'www.washingtonpost.com' in link.get('href'):
                     f.write('{href}\n'.format(href=link.get('href')))
+                    get_wp_story(link.get('href'))
 
     elif site is 'nyt':
         url = "http://www.nytimes.com"
@@ -60,7 +80,7 @@ def get_headlines(site):
             for link in links:
                 if 'www.nytimes.com/{year}/{month}/{day}'.format(year=year,month=month,day=day) in link.get('href'):
                     f.write('{href}\n'.format(href=link.get('href')))
-                    get_story(site, link.get('href'))
+                    get_nyt_story(link.get('href'))
 
     elif site is 'politico':
         url = 'http://politico.com'
@@ -78,7 +98,3 @@ def get_headlines(site):
             for link in links:
                 if 'www.politico.com/story/{year}/{month}/{day}/'.format(year=year,month=month,day=day) in link.get('href'):
                     f.write('{href}\n'.format(href=link.get('href')))
-
-get_headlines('nyt')
-get_headlines('politico')
-get_headlines('wp')
