@@ -4,7 +4,6 @@ import os
 import errno
 from datetime import date
 from bs4 import BeautifulSoup
-import re
 
 ua = {"User-Agent":"Mozilla/5.0"}
 today = date.today()
@@ -48,11 +47,7 @@ def get_wp_story(url):
         f.write('<h1>' + headline.strip() + '</h1>' + '\n\n')
         for section in body:
             if len(section.text) > 2:
-                new_text = re.sub('\r?’', "'", section.text)
-                new_text = re.sub('\r?‘', "'", new_text)
-                new_text = re.sub('\r?”', '"', new_text)
-                new_text = re.sub('\r?“', '"', new_text)
-                f.write('<p>' + new_text.strip() + '</p>' + '\n')
+                f.write('<p>' + section.text.strip() + '</p>' + '\n')
         f.write('</body></html>')
 
 
