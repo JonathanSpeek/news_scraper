@@ -5,74 +5,11 @@ import errno
 from datetime import date
 from bs4 import BeautifulSoup
 
-ua = {"User-Agent":"Mozilla/5.0"}
+ua = {"User-Agent": "Mozilla/5.0"}
 today = date.today()
 day = today.strftime('%d')
 month = today.strftime('%m')
 year = today.year
-
-
-def get_nyt_story(url):
-    page = requests.get(url, headers=ua)
-    soup = BeautifulSoup(page.text, "lxml")
-    body = soup.select('p.story-body-text')
-    headline = soup.select('h1.headline')[0].text
-    formatted_headline = headline.replace(' ', '')[0:15]
-    try:
-        os.makedirs('nyt/{year}-{month}-{day}'.format(month=month, day=day, year=year))
-    except OSError as e:
-        if e.errno != errno.EEXIST:
-            raise
-    with open('nyt/{year}-{month}-{day}/{headline}.html'.format(headline=formatted_headline, month=month, day=day, year=year), 'w') as f:
-        f.write('<!doctype html><html lang="en"><head><meta charset="utf-8"><link href="https://fonts.googleapis.com/css?family=Playfair+Display:700i" rel="stylesheet"><style>body{text-align:center;margin:2% 20%;}h1{font-family: NYTImperial, "Playfair Display", serif;font-style: italic;font-size: 2.125rem;line-height: 2.375rem;font-weight: 700;}p{text-align: left;line-height: 1.625rem;font-weight: 400;font-style: normal;font-family: georgia;font-size: 1.0625rem;}</style></head><body>')
-        f.write('<h1>' + headline.strip() + '</h1>' + '\n\n')
-        for section in body:
-            f.write('<p>' + section.text.strip() + '</p>' + '\n')
-        f.write('</body></html>')
-
-
-def get_wp_story(url):
-    page = requests.get(url, headers=ua)
-    soup = BeautifulSoup(page.text, "lxml")
-    body = soup.select('article p')
-    headline = soup.select('h1')[0].text
-    formatted_headline = headline.replace(' ', '')[0:15]
-    try:
-        os.makedirs('wp/{year}-{month}-{day}'.format(month=month,day=day,year=year))
-    except OSError as e:
-        if e.errno != errno.EEXIST:
-            raise
-    with open('wp/{year}-{month}-{day}/{headline}.html'.format(headline=formatted_headline,month=month,day=day,year=year), 'w') as f:
-        f.write('<!doctype html><html lang="en"><head><meta charset="utf-8"><link href="https://fonts.googleapis.com/css?family=Playfair+Display:700i" rel="stylesheet"><style>body{text-align:center;margin:2% 20%;}h1{font-family: NYTImperial, "Playfair Display", serif;font-style: italic;font-size: 2.125rem;line-height: 2.375rem;font-weight: 700;}p{text-align: left;line-height: 1.625rem;font-weight: 400;font-style: normal;font-family: georgia;font-size: 1.0625rem;}</style></head><body>')
-        f.write('<h1>' + headline.strip() + '</h1>' + '\n\n')
-        for section in body:
-            if len(section.text) > 2:
-                f.write('<p>' + section.text.strip() + '</p>' + '\n')
-        f.write('</body></html>')
-
-
-def get_politico_story(url):
-    page = requests.get(url, headers=ua)
-    soup = BeautifulSoup(page.text, "lxml")
-    story_div = soup.find_all('div', class_="story-text")
-    headline = soup.find(itemprop="headline").get_text()
-    formatted_headline = headline.replace(' ', '')[0:15]
-    try:
-        os.makedirs('politico/{year}-{month}-{day}'.format(month=month, day=day, year=year))
-    except OSError as e:
-        if e.errno != errno.EEXIST:
-            raise
-    with open('politico/{year}-{month}-{day}/{headline}.html'.format(headline=formatted_headline, month=month, day=day,
-                                                               year=year), 'w') as f:
-        f.write(
-            '<!doctype html><html lang="en"><head><meta charset="utf-8"><link href="https://fonts.googleapis.com/css?family=Playfair+Display:700i" rel="stylesheet"><style>body{text-align:center;margin:2% 20%;}h1{font-family: NYTImperial, "Playfair Display", serif;font-style: italic;font-size: 2.125rem;line-height: 2.375rem;font-weight: 700;}p{text-align: left;line-height: 1.625rem;font-weight: 400;font-style: normal;font-family: georgia;font-size: 1.0625rem;}</style></head><body>')
-        f.write('<h1>' + headline.strip() + '</h1>' + '\n\n')
-        for element in story_div:
-            section = element.select('p')
-            for p in section:
-                if len(p.text) > 2:
-                    f.write('<p>' + p.text.strip() + '</p>' + '\n')
-        f.write('</body></html>')
 
 
 def get_headlines(site):
@@ -99,13 +36,15 @@ def get_headlines(site):
         page = requests.get(url, headers=ua)
         soup = BeautifulSoup(page.text, "lxml")
         links = soup.select('div.headline a')
+        with open('index.html', 'a') as f:
+            f.write('<h2>Washington Post</h2>')
         print('--- Getting Washington Post Headlines ---')
         try:
             os.makedirs('wp')
         except OSError as e:
             if e.errno != errno.EEXIST:
                 raise
-        with open('wp/{month}-{day}-{year}.txt'.format(month=month,day=day,year=year), 'a') as f:
+        with open('wp/{month}-{day}-{year}.txt'.format(month=month, day=day, year=year), 'a') as f:
             f.write('--- Washington Post Headlines ---\n')
             for link in links:
                 if 'www.washingtonpost.com' in link.get('href'):
@@ -117,16 +56,18 @@ def get_headlines(site):
         page = requests.get(url, headers=ua)
         soup = BeautifulSoup(page.text, "lxml")
         links = soup.select('h2.story-heading a')
+        with open('index.html', 'a') as f:
+            f.write('<h2>New York Times</h2>')
         print('--- Getting New York Times Headlines ---')
         try:
             os.makedirs('nyt')
         except OSError as e:
             if e.errno != errno.EEXIST:
                 raise
-        with open('nyt/{month}-{day}-{year}.txt'.format(month=month,day=day,year=year), 'a') as f:
+        with open('nyt/{month}-{day}-{year}.txt'.format(month=month, day=day, year=year), 'a') as f:
             f.write('--- New York Times Headlines ---\n')
             for link in links:
-                if 'www.nytimes.com/{year}/{month}/{day}'.format(year=year,month=month,day=day) in link.get('href'):
+                if 'www.nytimes.com/{year}/{month}/{day}'.format(year=year, month=month, day=day) in link.get('href'):
                     f.write('{href}\n'.format(href=link.get('href')))
                     get_nyt_story(link.get('href'))
 
@@ -135,6 +76,8 @@ def get_headlines(site):
         page = requests.get(url, headers=ua)
         soup = BeautifulSoup(page.text, "lxml")
         links = soup.select('header a')
+        with open('index.html', 'a') as f:
+            f.write('<h2>Politico</h2>')
         print('--- Getting Politico Headlines ---\n')
         try:
             os.makedirs('politico')
@@ -144,6 +87,91 @@ def get_headlines(site):
         with open('politico/{month}-{day}-{year}.txt'.format(month=month, day=day, year=year), 'a') as f:
             f.write('--- Politico Headlines ---\n')
             for link in links:
-                if 'www.politico.com/story/{year}/{month}/{day}/'.format(year=year, month=month, day=day) in link.get('href'):
+                if 'www.politico.com/story/{year}/{month}/{day}/'.format(year=year, month=month, day=day) in link.get(
+                        'href'):
                     f.write('{href}\n'.format(href=link.get('href')))
                     get_politico_story(link.get('href'))
+
+
+def get_nyt_story(url):
+    page = requests.get(url, headers=ua)
+    soup = BeautifulSoup(page.text, "lxml")
+    try:
+        if soup.find("div", {"class": "image"}).find("img"):
+            img = soup.find("div", {"class": "image"}).find("img")
+    except (AttributeError, KeyError):
+        img = False
+    body = soup.select('p.story-body-text')
+    headline = soup.select('h1.headline')[0].text
+    formatted_headline = headline.replace(' ', '')[0:15]
+    try:
+        os.makedirs('nyt/{year}-{month}-{day}'.format(month=month, day=day, year=year))
+    except OSError as e:
+        if e.errno != errno.EEXIST:
+            pass
+    create_index_page('nyt', headline, formatted_headline)
+    with open('nyt/{year}-{month}-{day}/{headline}.html'.format(headline=formatted_headline, month=month, day=day,
+                                                                year=year), 'w') as f:
+        f.write(
+            '<!doctype html><html lang="en"><head><meta charset="utf-8"><link rel="stylesheet" type="text/css" href="../../styles.css"></head><body>')
+        f.write('<h1>' + headline.strip() + '</h1>' + '\n\n')
+        if img:
+            f.write('<img src="{img}" />'.format(img=img["src"]))
+        for section in body:
+            f.write('<p>' + section.text.strip() + '</p>' + '\n')
+        f.write('</body></html>')
+
+
+def get_wp_story(url):
+    page = requests.get(url, headers=ua)
+    soup = BeautifulSoup(page.text, "lxml")
+    body = soup.select('article p')
+    headline = soup.select('h1')[0].text
+    formatted_headline = headline.replace(' ', '')[0:15]
+    try:
+        os.makedirs('wp/{year}-{month}-{day}'.format(month=month, day=day, year=year))
+    except OSError as e:
+        if e.errno != errno.EEXIST:
+            pass
+    create_index_page('wp', headline, formatted_headline)
+    with open('wp/{year}-{month}-{day}/{headline}.html'.format(headline=formatted_headline, month=month, day=day,
+                                                               year=year), 'w') as f:
+        f.write(
+            '<!doctype html><html lang="en"><head><meta charset="utf-8"><link rel="stylesheet" type="text/css" href="../../styles.css"></head><body>')
+        f.write('<h1>' + headline.strip() + '</h1>' + '\n\n')
+        for section in body:
+            if len(section.text) > 2:
+                f.write('<p>' + section.text.strip() + '</p>' + '\n')
+        f.write('</body></html>')
+
+
+def get_politico_story(url):
+    page = requests.get(url, headers=ua)
+    soup = BeautifulSoup(page.text, "lxml")
+    story_div = soup.find_all('div', class_="story-text")
+    headline = soup.find(itemprop="headline").get_text()
+    formatted_headline = headline.replace(' ', '')[0:15]
+    try:
+        os.makedirs('politico/{year}-{month}-{day}'.format(month=month, day=day, year=year))
+    except OSError as e:
+        if e.errno != errno.EEXIST:
+            pass
+    create_index_page('politico', headline, formatted_headline)
+    with open('politico/{year}-{month}-{day}/{headline}.html'.format(headline=formatted_headline, month=month, day=day,
+                                                                     year=year), 'w') as f:
+        f.write(
+            '<!doctype html><html lang="en"><head><meta charset="utf-8"><link rel="stylesheet" type="text/css" href="../../styles.css"></head><body>')
+        f.write('<h1>' + headline.strip() + '</h1>' + '\n\n')
+        for element in story_div:
+            section = element.select('p')
+            for p in section:
+                if len(p.text) > 2:
+                    f.write('<p>' + p.text.strip() + '</p>' + '\n')
+        f.write('</body></html>')
+
+
+def create_index_page(publication, headline, formatted_headline):
+    with open('index.html', 'a') as f:
+        f.write('<h3><a href={publication}/{year}-{month}-{day}/{formatted_headline}.html>{headline}</a></h3>'.format(
+            publication=publication, year=year, month=month, day=day, formatted_headline=formatted_headline,
+            headline=headline.strip()))

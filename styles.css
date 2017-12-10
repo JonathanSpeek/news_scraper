@@ -1,0 +1,53 @@
+@import url('https://fonts.googleapis.com/css?family=Playfair+Display:400,400i,700,700i');
+
+body {
+    text-align: center;
+    margin: 2% 20%;
+}
+
+p {
+    text-align: left;
+    line-height: 1.625rem;
+    font-weight: 400;
+    font-style: normal;
+    font-family: georgia, serif;
+    font-size: 1.0625rem;
+}
+
+h1 {
+    font-family: NYTImperial, "Playfair Display", serif;
+    font-style: italic;
+    font-size: 2.125rem;
+    line-height: 2.375rem;
+    font-weight: 700;
+}
+
+h2 {
+    font-family: NYTImperial, "Playfair Display", serif;
+    font-style: italic;
+    font-size: 1.925rem;
+    line-height: 2.175rem;
+    font-weight: 700;
+    text-decoration: underline;
+}
+
+h3 {
+    font-family: NYTImperial, "Playfair Display", serif;
+    font-style: italic;
+    font-size: 1.625rem;
+    line-height: 2rem;
+    font-weight: 400;
+}
+
+a {
+    text-decoration: none;
+    color: black;
+}
+
+img {
+    max-width: 50vw;
+}
+
+a:hover {
+    text-decoration: underline;
+}
